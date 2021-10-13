@@ -14,8 +14,10 @@ import (
 	"github.com/chai2010/webp"
 )
 
+//Converts .jpeg or .png to .webp 
 //Maybe use https://github.com/h2non/bimg
 //instead of github.com/chai2010/webp
+//if image needs to be resized
 func encode(path string) {
 	var buf bytes.Buffer
 	var data []byte
@@ -45,6 +47,7 @@ func encode(path string) {
 	fmt.Println("Encoded to webp" + path)
 }
 
+//Returns same filepath, but with .webp as file ext.
 func newFilePath(filePath string) string {
 	dir, file := filepath.Split(filePath)
 	if pos := strings.LastIndexByte(file, '.'); pos != -1 {

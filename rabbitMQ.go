@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"github.com/streadway/amqp"
 )
@@ -22,7 +23,7 @@ func rabbitInit() {
 	defer ch.Close()
 
 	q, err := ch.QueueDeclare(
-		"hello", // name
+		"imageID", // name
 		false,   // durable
 		false,   // delete when unused
 		false,   // exclusive
@@ -53,6 +54,10 @@ func rabbitListen(ch *amqp.Channel, q amqp.Queue) {
 		for d := range msgs {
 			log.Printf("Received a message: %s", d.Body)
 			encode(string(d.Body))
+			err := os.Remove(string(d.Body))
+			if err != nil {
+				log.Println(err)
+			}
 		}
 	}()
 
