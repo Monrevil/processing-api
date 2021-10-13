@@ -52,6 +52,7 @@ func rabbitListen(ch *amqp.Channel, q amqp.Queue) {
 	go func() {
 		for d := range msgs {
 			log.Printf("Received a message: %s", d.Body)
+			encode(string(d.Body))
 		}
 	}()
 

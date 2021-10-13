@@ -4,21 +4,25 @@ import (
 	"bytes"
 	"fmt"
 	"image"
-	_ "image/png"
 	_ "image/jpeg"
+	_ "image/png"
 	"io/ioutil"
 	"log"
+	"path/filepath"
+	"strings"
 
 	"github.com/chai2010/webp"
 )
 
-func encode() {
+//Maybe use https://github.com/h2non/bimg
+//instead of github.com/chai2010/webp
+func encode(path string) {
 	var buf bytes.Buffer
 	var data []byte
 	var err error
 
 	// Load file data
-	if data, err = ioutil.ReadFile("./testdata/1.png"); err != nil {
+	if data, err = ioutil.ReadFile(path); err != nil {
 		log.Println(err)
 	}
 
@@ -32,9 +36,19 @@ func encode() {
 		log.Println(err)
 	}
 
-	if err = ioutil.WriteFile("./testdata/1.webp", buf.Bytes(), 0666); err != nil {
+
+	path = newFilePath(path)
+	if err = ioutil.WriteFile(path, buf.Bytes(), 0666); err != nil {
 		log.Println(err)
 	}
 
-	fmt.Println("Saved ./testdata/1.webp ok")
+	fmt.Println("Encoded to webp" + path)
+}
+
+func newFilePath(filePath string) string {
+	dir, file := filepath.Split(filePath)
+	if pos := strings.LastIndexByte(file, '.'); pos != -1 {
+		file = file[:pos]
+	}
+	return dir + file + ".webp"
 }
