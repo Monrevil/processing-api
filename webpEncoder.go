@@ -2,29 +2,23 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"image"
 	_ "image/jpeg"
 	_ "image/png"
 	"io/ioutil"
 	"log"
-	"path/filepath"
+	"os"
 	"strings"
 
 	"github.com/chai2010/webp"
 )
 
-//Converts .jpeg or .png to .webp 
-//Maybe use https://github.com/h2non/bimg
-//instead of github.com/chai2010/webp
-//if image needs to be resized
+//Takes filepath as argument. Converts .jpeg or .png to .webp
+//And saves it.
 func encode(path string) {
-	var buf bytes.Buffer
-	var data []byte
-	var err error
-
-	// Load file data
-	if data, err = ioutil.ReadFile(path); err != nil {
+	// Load file
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
 		log.Println(err)
 	}
 
@@ -32,26 +26,30 @@ func encode(path string) {
 	if err != nil {
 		log.Println(err)
 	}
+
 	// Encode lossless webp
-
-	if err = webp.Encode(&buf, m, &webp.Options{Lossless: true}); err != nil {
+	var buf bytes.Buffer
+	if err := webp.Encode(&buf, m, &webp.Options{Lossless: true}); err != nil {
 		log.Println(err)
 	}
 
+	// Change filename extensions to .webp
+	if pos := strings.LastIndexByte(path, '.'); pos != -1 {
+		path = path[:pos] + ".webp"
+	}
 
-	path = newFilePath(path)
-	if err = ioutil.WriteFile(path, buf.Bytes(), 0666); err != nil {
+	// Save to file
+	if err := ioutil.WriteFile(path, buf.Bytes(), 0666); err != nil {
 		log.Println(err)
 	}
 
-	fmt.Println("Encoded to webp" + path)
+	log.Println("Encoded to webp" + path)
 }
 
-//Returns same filepath, but with .webp as file ext.
-func newFilePath(filePath string) string {
-	dir, file := filepath.Split(filePath)
-	if pos := strings.LastIndexByte(file, '.'); pos != -1 {
-		file = file[:pos]
+//Delete file
+func remove(path string) {
+	err := os.Remove(path)
+	if err != nil {
+		log.Println(err)
 	}
-	return dir + file + ".webp"
 }

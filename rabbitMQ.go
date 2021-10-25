@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"os"
 
 	"github.com/streadway/amqp"
 )
@@ -13,8 +12,10 @@ func failOnError(err error, msg string) {
 	}
 }
 
-func rabbitInit() {
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+// RabbitListen listens to the messegaes on a given connection and queue.
+// And pass them into a function.
+func rabbitListen(url string, queue string, processors ...func(string)) {
+	conn, err := amqp.Dial(url)
 	failOnError(err, "Failed to connect to RabbitMQ")
 	defer conn.Close()
 
@@ -23,20 +24,15 @@ func rabbitInit() {
 	defer ch.Close()
 
 	q, err := ch.QueueDeclare(
-		"imageID", // name
-		false,   // durable
-		false,   // delete when unused
-		false,   // exclusive
-		false,   // no-wait
-		nil,     // arguments
+		queue, // name
+		false,     // durable
+		false,     // delete when unused
+		false,     // exclusive
+		false,     // no-wait
+		nil,       // arguments
 	)
 	failOnError(err, "Failed to declare a queue")
 
-	rabbitListen(ch, q)
-
-}
-
-func rabbitListen(ch *amqp.Channel, q amqp.Queue) {
 	msgs, err := ch.Consume(
 		q.Name, // queue
 		"",     // consumer
@@ -53,11 +49,10 @@ func rabbitListen(ch *amqp.Channel, q amqp.Queue) {
 	go func() {
 		for d := range msgs {
 			log.Printf("Received a message: %s", d.Body)
-			encode(string(d.Body))
-			err := os.Remove(string(d.Body))
-			if err != nil {
-				log.Println(err)
+			for _, f := range processors {
+				f(string(d.Body))
 			}
+
 		}
 	}()
 
